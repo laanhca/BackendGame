@@ -15,7 +15,7 @@ public class Table_UserData {
     private static final String ATTRIBUTE_POINT = "Point";
     private static final String ATTRIBUTE_IP = "IP";
     private static final String MAP_INFO = "Information";
-    private static final String INFO_LOGINTYPE = "LoginType";
+    private static final String INFO_LOGIN_TYPE = "LoginType";
     private static final String INFO_AVT_ID = "AvatarId";
     private static final String INFO_NAME = "NameShow";
     private static final int START_POINT = 10;
@@ -51,7 +51,17 @@ public class Table_UserData {
         if(this.getItem(userId)!=null) return false;
 
         Map<String, Object> info = new HashMap<>();
-        info.put(INFO_LOGINTYPE, LoginType.USERNAME.getValue());
+        info.put(INFO_LOGIN_TYPE, LoginType.USERNAME.getValue());
+        info.put(INFO_NAME, nameShow);
+        info.put(INFO_AVT_ID, 0);
+        this.insertItem(userId, START_POINT, ip, info);
+        return true;
+    }
+    public Object regWithMail(String nameShow, long userId, String ip) {
+        if(this.getItem(userId)!=null) return false;
+
+        Map<String, Object> info = new HashMap<>();
+        info.put(INFO_LOGIN_TYPE, LoginType.MAIL.getValue());
         info.put(INFO_NAME, nameShow);
         info.put(INFO_AVT_ID, 0);
         this.insertItem(userId, START_POINT, ip, info);

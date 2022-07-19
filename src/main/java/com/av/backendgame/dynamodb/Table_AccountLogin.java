@@ -3,10 +3,16 @@ package com.av.backendgame.dynamodb;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
+import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
+import com.amazonaws.services.dynamodbv2.model.ReturnValue;
+import com.av.backendgame.api.controller.service.loginscreen.MailSender;
+import org.apache.juli.logging.Log;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +26,8 @@ public class Table_AccountLogin {
     private static final String ATTRIBUTE_USER_ID = "UserId";
     private static final String MAP_INFO = "Information";
     private static final String INFO_PASS = "Password";
+    private static final String INFO_CODE = "VerifyCode";
+    private static final String INFO_CODE_TIME = "VerifyTime";
     private static final String INFO_DEVICE = "DeviceModel";
 
 
@@ -49,6 +57,15 @@ public class Table_AccountLogin {
     public void updateItem(){
 
     }
+    public void updateVerifyCode(String mail, int code, long time){
+        UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey(HASHKEY, mail, RANGEKEY, LoginType.MAIL.getValue())
+                .withUpdateExpression("SET " + MAP_INFO + "." + INFO_CODE + " = :code, " + MAP_INFO + "." + INFO_CODE_TIME + " = :codeTime")
+                .withValueMap(new ValueMap()
+                        .withNumber(":code", code)
+                        .withNumber(":codeTime", time))
+                .withReturnValues(ReturnValue.UPDATED_NEW);
+        table.updateItem(updateItemSpec);
+    }
 ///////////////////////////////////////////////////////////////////////////
     public Object loginWithUserName(String credentials, String password) {
         Item account = table.getItem( new GetItemSpec().withPrimaryKey(HASHKEY, credentials, RANGEKEY, LoginType.USERNAME.getValue()));
@@ -67,12 +84,36 @@ public class Table_AccountLogin {
 
     }
 
-    public Object sendMail(String mail, int code) {
-        if(this.getItem(mail, LoginType.MAIL.getValue())!= null) return null;
-        long userid = System.currentTimeMillis();
-        Map<String, Object> info = new HashMap<>();
+    public Object sendMail(String mail, int code, String ip) {
+        Item currentAccount = this.getItem(mail, LoginType.MAIL.getValue());
+        if(currentAccount!= null) {
+            long verifyTime = ((BigDecimal)currentAccount.getMap(MAP_INFO).get(INFO_CODE_TIME)).longValue();
+            long currentTime = System.currentTimeMillis();
+            long deltaTime = (currentTime - verifyTime)/1000;
+            if(deltaTime> 180){
+
+                this.updateVerifyCode(mail, code, System.currentTimeMillis());
+                return true;
+            }
+            return false;
+        }
         long userId = System.currentTimeMillis();
+        Map<String, Object> info = new HashMap<>();
+        info.put(INFO_CODE, code);
+        info.put(INFO_CODE_TIME, userId);
         this.insertItem(mail, LoginType.MAIL.getValue(), userId , info);
-        return userid;
+
+        String nameShow = mail.split("@")[0] + (int)Math.floor(Math.random()*(9999-1000+1)+1000);
+        Table_UserData.getInstance().regWithMail(nameShow, userId, ip);
+        return userId;
+    }
+
+    public Object loginWithMail(String mail, int code) {
+        Item itemAcc = this.getItem(mail, LoginType.MAIL.getValue());
+        if(itemAcc == null) return false;
+        Item itemUser = Table_UserData.getInstance().getItem(((BigDecimal)itemAcc.getNumber(ATTRIBUTE_USER_ID)).longValue());
+        if(itemUser==null) return false;
+        int originCode= ((BigDecimal)itemAcc.getMap(MAP_INFO).get(INFO_CODE)).intValue();
+        return code== originCode;
     }
 }

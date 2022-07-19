@@ -1,6 +1,6 @@
 package com.av.backendgame.api.model;
 
 public class MailLoginForm {
-    public long userId;
+    public String mail;
     public int code;
 }
