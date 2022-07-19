@@ -16,8 +16,8 @@ public class BaseDynamoDB {
     protected String secretKey;
 
     private BaseDynamoDB() {
-        accessKey = "AKIA2T6PUXVZXB3WP5XY";
-        secretKey ="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";
+        accessKey = "";
+        secretKey ="";
         awsCreds = new BasicAWSCredentials(accessKey,secretKey);
         client=null;
 
