@@ -10,9 +10,13 @@ import java.util.Map;
 public class Service_LoginScreen_RegWithUsername {
 
     public ResponseEntity<?> getRespone(UsernameLoginForm loginForm){
-        String credentials = loginForm.credentials;
-        String password = loginForm.password;
+        String credentials = loginForm.getCredentials();
+        String password = loginForm.getPassword();
         String ip = new HttpUtils().getClientIpAddressIfServletRequestExist();
-        return new ResponseEntity<>(Table_AccountLogin.getInstance().regWithUserName(credentials, password, ip), HttpStatus.OK);
+        Object result = Table_AccountLogin.getInstance().regWithUserName(credentials, password, ip);
+        if(result!= null){
+            return new ResponseEntity<>(result, HttpStatus.CREATED);
+        }
+        return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
     }
 }

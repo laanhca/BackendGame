@@ -2,19 +2,20 @@ package com.av.backendgame.api.model;
 
 import io.swagger.annotations.ApiModelProperty;
 
-public class MailLoginForm {
+public class ChangePointForm {
     @ApiModelProperty(required = true)
-    private String mail;
+    private String token;
     @ApiModelProperty(required = true)
-    private int code;
 
-    public String getMail() {
-        return mail;
+    private int point;
+
+    public String getToken() {
+        return token;
     }
 
 
-    public int getCode() {
-        return code;
+    public int getPoint() {
+        return point;
     }
 
 }

@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.spec.GetItemSpec;
 import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.ReturnValue;
+import com.av.backendgame.Security.RSASecurity;
 import com.av.backendgame.api.controller.service.loginscreen.MailSender;
 import org.apache.juli.logging.Log;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -69,7 +70,17 @@ public class Table_AccountLogin {
 ///////////////////////////////////////////////////////////////////////////
     public Object loginWithUserName(String credentials, String password) {
         Item account = table.getItem( new GetItemSpec().withPrimaryKey(HASHKEY, credentials, RANGEKEY, LoginType.USERNAME.getValue()));
-        return account.getMap(MAP_INFO).get(INFO_PASS).equals(password);
+        if(account== null) return false;
+        if(account.getMap(MAP_INFO).get(INFO_PASS).equals(password)){
+             Map<String, Object> data = new HashMap<>();
+             data.put("UserId", account.getNumber(ATTRIBUTE_USER_ID).longValue());
+             data.put("TimeOut", System.currentTimeMillis());
+             String token = RSASecurity.getInstance().Encryption(data);
+             Map<String, Object> result = new HashMap<>();
+             result.put("token", token);
+             return result;
+        }
+        return false;
     }
 
     public Object regWithUserName(String credentials, String password, String ip) {
@@ -91,29 +102,42 @@ public class Table_AccountLogin {
             long currentTime = System.currentTimeMillis();
             long deltaTime = (currentTime - verifyTime)/1000;
             if(deltaTime> 180){
-
+                MailSender.sendEmail(MailSender.GMAIL, MailSender.APP_PASSWORD, mail, "Verify your account", "Your verify code: "+ code);
                 this.updateVerifyCode(mail, code, System.currentTimeMillis());
                 return true;
             }
-            return false;
+            return null;
         }
         long userId = System.currentTimeMillis();
         Map<String, Object> info = new HashMap<>();
         info.put(INFO_CODE, code);
         info.put(INFO_CODE_TIME, userId);
+        MailSender.sendEmail(MailSender.GMAIL, MailSender.APP_PASSWORD, mail, "Verify your account", "Your verify code: "+ code);
         this.insertItem(mail, LoginType.MAIL.getValue(), userId , info);
 
         String nameShow = mail.split("@")[0] + (int)Math.floor(Math.random()*(9999-1000+1)+1000);
         Table_UserData.getInstance().regWithMail(nameShow, userId, ip);
-        return userId;
+        Map<String, Object> result = new HashMap<>();
+        result.put(ATTRIBUTE_USER_ID, userId);
+        return result;
     }
 
     public Object loginWithMail(String mail, int code) {
         Item itemAcc = this.getItem(mail, LoginType.MAIL.getValue());
-        if(itemAcc == null) return false;
-        Item itemUser = Table_UserData.getInstance().getItem(((BigDecimal)itemAcc.getNumber(ATTRIBUTE_USER_ID)).longValue());
-        if(itemUser==null) return false;
-        int originCode= ((BigDecimal)itemAcc.getMap(MAP_INFO).get(INFO_CODE)).intValue();
-        return code== originCode;
+        if(itemAcc == null) return null;
+        long userId = itemAcc.getNumber(ATTRIBUTE_USER_ID).longValue();
+        Item itemUser = Table_UserData.getInstance().getItem(userId);
+        if(itemUser==null) return null;
+        int trueCode= ((BigDecimal)itemAcc.getMap(MAP_INFO).get(INFO_CODE)).intValue();
+
+
+        if(code!= trueCode)return false;
+        Map<String, Object> data = new HashMap<>();
+        data.put("UserId", userId);
+        data.put("TimeOut", System.currentTimeMillis());
+        String token = RSASecurity.getInstance().Encryption(data);
+        Map<String, Object> result = new HashMap<>();
+        result.put("token", token);
+        return result;
     }
 }

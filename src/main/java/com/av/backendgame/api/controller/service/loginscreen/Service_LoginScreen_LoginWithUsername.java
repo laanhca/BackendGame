@@ -9,8 +9,14 @@ import java.util.Map;
 
 public class Service_LoginScreen_LoginWithUsername {
     public ResponseEntity<?> getRespone(UsernameLoginForm loginForm){
-        String credentials = loginForm.credentials;
-        String password = loginForm.password;
-        return new ResponseEntity<>(Table_AccountLogin.getInstance().loginWithUserName(credentials, password), HttpStatus.OK);
+        String credentials = loginForm.getCredentials();
+        String password = loginForm.getPassword();
+        Object result= Table_AccountLogin.getInstance().loginWithUserName(credentials, password);
+        if(result!= null){
+            return new ResponseEntity<>( result, HttpStatus.OK);
+        } else if (result instanceof Boolean) {
+            return new ResponseEntity<>( null, HttpStatus.FORBIDDEN);
+        }
+        return new ResponseEntity<>( null, HttpStatus.NOT_FOUND);
     }
 }

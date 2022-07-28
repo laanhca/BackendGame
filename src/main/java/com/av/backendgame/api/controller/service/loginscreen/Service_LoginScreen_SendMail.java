@@ -9,6 +9,13 @@ public class Service_LoginScreen_SendMail {
 
         int code = (int)Math.floor(Math.random()*(9999-1000+1)+1000);
         String ip = new HttpUtils().getClientIpAddressIfServletRequestExist();
-        return new ResponseEntity<>(Table_AccountLogin.getInstance().sendMail(mail, code, ip), HttpStatus.OK);
+        Object result = Table_AccountLogin.getInstance().sendMail(mail, code, ip);
+        if(result==null) {
+            return new ResponseEntity<>(null, HttpStatus.FORBIDDEN);
+        } else if (result instanceof Boolean) {
+            return new ResponseEntity<>(null, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+
     }
 }

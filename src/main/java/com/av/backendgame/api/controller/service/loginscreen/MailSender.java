@@ -12,6 +12,8 @@ import java.io.OutputStream;
 import java.util.Properties;
 
 public  class MailSender {
+    public static final String GMAIL = "vanduc74cc@gmail.com";
+    public static final String APP_PASSWORD = "eqlsfeqbyfnscgqb";
     public static void sendEmail(final String gmail, final String appPassword, final String emailTo, final String subject, final String content) {
         Properties prop = new Properties();
         prop.put("mail.smtp.host", "smtp.gmail.com");
