@@ -19,6 +19,8 @@ target/
 *.iml
 *.ipr
 
+*.rsa
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -27,9 +29,8 @@ target/
 /.nb-gradle/
 build/
 !**/src/main/**/build/
-!**/src/main/resources/
-!**/src/main/resources/privateKey.rsa
-!**/src/main/resources/publicKey.rsa
+/src/main/resources/privateKey.rsa
+/src/main/resources/publicKey.rsa
 !**/src/test/**/build/
 
 ### VS Code ###
